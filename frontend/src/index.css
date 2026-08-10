@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+  --color-estado-abierto: #2563eb;
+  --color-estado-progreso: #d97706;
+  --color-estado-espera: #7c3aed;
+  --color-estado-resuelto: #16a34a;
+  --color-estado-cerrado: #6b7280;
+
+  --color-prioridad-critica: #dc2626;
+  --color-prioridad-alta: #ea580c;
+  --color-prioridad-media: #ca8a04;
+  --color-prioridad-baja: #16a34a;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900;
+}

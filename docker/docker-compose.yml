@@ -1,0 +1,71 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tickets_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-tickets}
+      # Usado por 08_set_passwords.sh para fijar la contraseña del rol
+      # "authenticator" creado en 04_roles.sql.
+      AUTHENTICATOR_PASSWORD: ${AUTHENTICATOR_PASSWORD}
+    volumes:
+      - tickets_pgdata:/var/lib/postgresql/data
+      # Se montan uno a uno (en vez de la carpeta completa) para poder
+      # intercalar 09_set_passwords.sh al final manteniendo el orden 01-09.
+      - ../database/01_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ../database/02_indexes.sql:/docker-entrypoint-initdb.d/02_indexes.sql:ro
+      - ../database/03_functions_triggers.sql:/docker-entrypoint-initdb.d/03_functions_triggers.sql:ro
+      - ../database/04_roles.sql:/docker-entrypoint-initdb.d/04_roles.sql:ro
+      - ../database/05_grants.sql:/docker-entrypoint-initdb.d/05_grants.sql:ro
+      - ../database/06_rls_policies.sql:/docker-entrypoint-initdb.d/06_rls_policies.sql:ro
+      - ../database/07_seed.sql:/docker-entrypoint-initdb.d/07_seed.sql:ro
+      - ../database/08_usuarios_self_signup.sql:/docker-entrypoint-initdb.d/08_usuarios_self_signup.sql:ro
+      - ./initdb/09_set_passwords.sh:/docker-entrypoint-initdb.d/09_set_passwords.sh:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - tickets_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-tickets}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  postgrest:
+    image: postgrest/postgrest:latest
+    container_name: tickets_postgrest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${POSTGREST_PORT:-3000}:3000"
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${AUTHENTICATOR_PASSWORD}@postgres:5432/${POSTGRES_DB:-tickets}
+      PGRST_DB_SCHEMAS: api
+      PGRST_DB_ANON_ROLE: web_anon
+      # URL del JWKS de tu User Pool de Cognito. PostgREST detecta que es
+      # una URL y descarga las llaves públicas para validar el JWT (RS256).
+      PGRST_JWT_SECRET: ${COGNITO_JWKS_URL}
+      PGRST_JWT_SECRET_IS_BASE64: "false"
+      # Cognito mete el rol en "cognito:groups" (array), no en "role".
+      # Este JSONPath toma el primer grupo del usuario como rol de Postgres.
+      # Las comillas van literales (comillas simples de YAML por fuera),
+      # NO escapadas con backslash: eso solo aplica dentro de postgrest.conf.
+      PGRST_JWT_ROLE_CLAIM_KEY: '."cognito:groups"[0]'
+      # Descomenta si validas el ID Token (trae "aud" = App Client ID).
+      # Los Access Token de Cognito no traen "aud".
+      # PGRST_JWT_AUD: ${COGNITO_APP_CLIENT_ID}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_SERVER_PORT: 3000
+    networks:
+      - tickets_net
+
+volumes:
+  tickets_pgdata:
+
+networks:
+  tickets_net:
+    driver: bridge
