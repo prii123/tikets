@@ -34,7 +34,10 @@ services:
       retries: 10
 
   postgrest:
-    image: postgrest/postgrest:latest
+    # Fijado a v14.13: PostgREST v16 cambió el parser de jwt-role-claim-key
+    # y rompe la sintaxis .\"key\"[0] para claims con caracteres especiales
+    # (ej. "cognito:groups"). Confirmado reproduciendo el crash en local.
+    image: postgrest/postgrest:v14.13
     container_name: tickets_postgrest
     restart: unless-stopped
     depends_on:
