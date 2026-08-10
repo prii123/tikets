@@ -63,6 +63,25 @@ services:
     networks:
       - tickets_net
 
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      # Vite incrusta estas variables en el bundle en tiempo de build.
+      # Si cambias la IP del backend o el Cognito, hay que reconstruir:
+      # docker compose build frontend && docker compose up -d frontend
+      args:
+        VITE_POSTGREST_URL: ${VITE_POSTGREST_URL}
+        VITE_COGNITO_REGION: ${VITE_COGNITO_REGION}
+        VITE_COGNITO_USER_POOL_ID: ${VITE_COGNITO_USER_POOL_ID}
+        VITE_COGNITO_CLIENT_ID: ${VITE_COGNITO_CLIENT_ID}
+    container_name: tickets_frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    networks:
+      - tickets_net
+
 volumes:
   tickets_pgdata:
 
