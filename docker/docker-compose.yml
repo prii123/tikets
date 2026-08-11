@@ -51,9 +51,20 @@ services:
       PGRST_DB_URI: postgres://authenticator:${AUTHENTICATOR_PASSWORD}@postgres:5432/${POSTGRES_DB:-tickets}
       PGRST_DB_SCHEMAS: api
       PGRST_DB_ANON_ROLE: web_anon
-      # URL del JWKS de tu User Pool de Cognito. PostgREST detecta que es
-      # una URL y descarga las llaves públicas para validar el JWT (RS256).
-      PGRST_JWT_SECRET: ${COGNITO_JWKS_URL}
+      # JSON del JWKS de tu User Pool de Cognito, FIJO (no una URL). Con
+      # PostgREST v14.13 descargar el JWKS por URL falla con "No suitable
+      # key or wrong key type" (PGRST301) aunque el kid sí exista ahí —
+      # parece un bug de esa versión con el fetch/parseo del JWKS remoto.
+      # Dándole el JSON ya resuelto se evita ese fetch por completo.
+      # Si Cognito llega a rotar sus llaves de firma, hay que actualizar
+      # PGRST_JWT_SECRET en .env con:
+      #   curl https://cognito-idp.<region>.amazonaws.com/<pool-id>/.well-known/jwks.json
+      #
+      # Sin valor a propósito: así Compose toma el valor tal cual del
+      # .env (PGRST_JWT_SECRET=...) sin que el YAML lo reinterprete —
+      # ese JSON tiene { } y comillas que romperían la sintaxis YAML si
+      # se sustituyera aquí como ${VAR}.
+      PGRST_JWT_SECRET:
       PGRST_JWT_SECRET_IS_BASE64: "false"
       # Cognito mete el rol en "cognito:groups" (array), no en "role".
       # Este JSONPath toma el primer grupo del usuario como rol de Postgres.
