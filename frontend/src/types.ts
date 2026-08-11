@@ -1,5 +1,13 @@
 export type Rol = 'admin' | 'agente' | 'cliente'
 
+export interface Empresa {
+  id: number
+  nombre: string
+  descripcion: string | null
+  activa: boolean
+  creado_en: string
+}
+
 export interface Usuario {
   id: number
   cognito_sub: string
@@ -7,8 +15,10 @@ export interface Usuario {
   email: string
   celular: string | null
   rol: Rol
+  empresa_id: number | null
   activo: boolean
   creado_en: string
+  empresa?: Pick<Empresa, 'id' | 'nombre'> | null
 }
 
 export interface Categoria {

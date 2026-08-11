@@ -214,8 +214,8 @@ erDiagram
 - Motor de base de datos: **PostgreSQL** (requerido por PostgREST). Usar `TIMESTAMPTZ` para todas las fechas.
 - Definir los **grupos en Cognito** (`admin`, `agente`, `cliente`) y crear los roles equivalentes en PostgreSQL con sus `GRANT`.
 - Escribir las **políticas RLS** por tabla (ej. `cliente` solo ve tickets donde `usuario_id` = su usuario; `agente` ve los asignados; `admin` ve todo).
-- Construir la pantalla de administración para que admin/agente den de alta usuarios: primero crea la cuenta en Cognito (`AdminCreateUser` + `AdminAddUserToGroup`) y luego el espejo en `usuarios` con su `empresa_id`. Como el navegador no puede llamar `AdminCreateUser` directamente (requiere credenciales de servidor), esto necesita una función/endpoint intermedio (ej. Lambda) — no se puede hacer solo con PostgREST.
-- Quitar del frontend el flujo público de "Crear cuenta" (ya no aplica: no hay auto-registro, y a nivel de base de datos `cliente` ya no tiene permiso de `INSERT` en `usuarios`).
+- ~~Construir la pantalla de administración para que admin/agente den de alta usuarios~~ — **Hecho.** `/admin/empresas` (crear/activar empresas, solo admin) y `/admin/usuarios` (crear usuarios y asociarlos a una empresa; admin puede asignar cualquier rol, agente solo puede crear `cliente`). Como el navegador no puede llamar `AdminCreateUser` de Cognito directamente, se agregó `lambda/crear-usuario/`: una Lambda con Function URL pública que valida el JWT de quien llama (debe ser admin/agente) antes de crear la cuenta. La contraseña temporal se muestra en pantalla para que el admin la comparta manualmente (no hay envío de correo automático en este flujo).
+- ~~Quitar del frontend el flujo público de "Crear cuenta"~~ — **Hecho.**
 - Decidir si se necesita **SLA** (tiempos máximos de respuesta/resolución) — implicaría una tabla adicional.
 - Notificaciones (correo o dentro de la app) cuando cambia el estado de un ticket — Cognito no cubre esto; evaluar SES/SNS.
 - Definir los endpoints que expone PostgREST (vistas/funciones para operaciones que no sean CRUD directo, ej. asignar ticket, cerrar ticket).

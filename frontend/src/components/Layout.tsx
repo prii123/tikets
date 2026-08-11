@@ -24,6 +24,16 @@ export function Layout() {
             Sistema de Tickets
           </Link>
           <div className="flex items-center gap-4">
+            {(rol === 'admin' || rol === 'agente') && (
+              <>
+                <Link to="/admin/usuarios" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+                  Usuarios
+                </Link>
+                <Link to="/admin/empresas" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+                  Empresas
+                </Link>
+              </>
+            )}
             <Link to="/tickets/nuevo" className="text-sm font-medium text-blue-600 hover:text-blue-800">
               + Nuevo ticket
             </Link>
