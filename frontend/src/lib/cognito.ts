@@ -1,7 +1,6 @@
 import {
   CognitoUser,
   CognitoUserPool,
-  CognitoUserAttribute,
   AuthenticationDetails,
   type CognitoUserSession,
 } from 'amazon-cognito-identity-js'
@@ -41,44 +40,6 @@ export function iniciarSesion(email: string, password: string): Promise<Sesion> 
           )
         )
       },
-    })
-  })
-}
-
-export function registrarse(
-  email: string,
-  password: string,
-  nombre: string,
-  celular?: string
-): Promise<void> {
-  const atributos = [new CognitoUserAttribute({ Name: 'email', Value: email })]
-  atributos.push(new CognitoUserAttribute({ Name: 'name', Value: nombre }))
-  if (celular) atributos.push(new CognitoUserAttribute({ Name: 'phone_number', Value: celular }))
-
-  return new Promise((resolve, reject) => {
-    userPool.signUp(email, password, atributos, [], (err) => {
-      if (err) reject(err)
-      else resolve()
-    })
-  })
-}
-
-export function confirmarRegistro(email: string, codigo: string): Promise<void> {
-  const usuario = new CognitoUser({ Username: email, Pool: userPool })
-  return new Promise((resolve, reject) => {
-    usuario.confirmRegistration(codigo, true, (err) => {
-      if (err) reject(err)
-      else resolve()
-    })
-  })
-}
-
-export function reenviarCodigo(email: string): Promise<void> {
-  const usuario = new CognitoUser({ Username: email, Pool: userPool })
-  return new Promise((resolve, reject) => {
-    usuario.resendConfirmationCode((err) => {
-      if (err) reject(err)
-      else resolve()
     })
   })
 }

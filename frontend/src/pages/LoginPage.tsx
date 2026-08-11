@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import * as cognito from '../lib/cognito'
 
-type Modo = 'login' | 'signup' | 'confirmar' | 'olvide' | 'restablecer'
+type Modo = 'login' | 'olvide' | 'restablecer'
 
 export function LoginPage() {
   const { iniciarSesion } = useAuth()
@@ -12,8 +12,6 @@ export function LoginPage() {
   const [modo, setModo] = useState<Modo>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [nombre, setNombre] = useState('')
-  const [celular, setCelular] = useState('')
   const [codigo, setCodigo] = useState('')
   const [nuevaPassword, setNuevaPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -34,36 +32,6 @@ export function LoginPage() {
       navigate('/', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión')
-    } finally {
-      setEnviando(false)
-    }
-  }
-
-  async function handleSignup(e: FormEvent) {
-    e.preventDefault()
-    resetMensajes()
-    setEnviando(true)
-    try {
-      await cognito.registrarse(email, password, nombre, celular || undefined)
-      setModo('confirmar')
-      setMensaje('Te enviamos un código de confirmación a tu correo.')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo crear la cuenta')
-    } finally {
-      setEnviando(false)
-    }
-  }
-
-  async function handleConfirmar(e: FormEvent) {
-    e.preventDefault()
-    resetMensajes()
-    setEnviando(true)
-    try {
-      await cognito.confirmarRegistro(email, codigo)
-      setModo('login')
-      setMensaje('Cuenta confirmada. Ya puedes iniciar sesión.')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Código inválido')
     } finally {
       setEnviando(false)
     }
@@ -117,34 +85,14 @@ export function LoginPage() {
             <Campo label="Correo" type="email" value={email} onChange={setEmail} required />
             <Campo label="Contraseña" type="password" value={password} onChange={setPassword} required />
             <BotonEnviar enviando={enviando} texto="Iniciar sesión" />
-            <div className="flex justify-between text-sm">
-              <button type="button" className="text-blue-600 hover:underline" onClick={() => { resetMensajes(); setModo('signup') }}>
-                Crear cuenta
-              </button>
+            <div className="text-center text-sm">
               <button type="button" className="text-blue-600 hover:underline" onClick={() => { resetMensajes(); setModo('olvide') }}>
                 Olvidé mi contraseña
               </button>
             </div>
-          </form>
-        )}
-
-        {modo === 'signup' && (
-          <form onSubmit={handleSignup} className="space-y-4">
-            <Campo label="Nombre completo" value={nombre} onChange={setNombre} required />
-            <Campo label="Correo" type="email" value={email} onChange={setEmail} required />
-            <Campo label="Celular (opcional, formato +52...)" value={celular} onChange={setCelular} />
-            <Campo label="Contraseña" type="password" value={password} onChange={setPassword} required />
-            <BotonEnviar enviando={enviando} texto="Crear cuenta" />
-            <VolverALogin onClick={() => { resetMensajes(); setModo('login') }} />
-          </form>
-        )}
-
-        {modo === 'confirmar' && (
-          <form onSubmit={handleConfirmar} className="space-y-4">
-            <Campo label="Correo" type="email" value={email} onChange={setEmail} required />
-            <Campo label="Código de confirmación" value={codigo} onChange={setCodigo} required />
-            <BotonEnviar enviando={enviando} texto="Confirmar cuenta" />
-            <VolverALogin onClick={() => { resetMensajes(); setModo('login') }} />
+            <p className="text-center text-xs text-slate-400">
+              Las cuentas las crea un administrador o agente — no hay registro público.
+            </p>
           </form>
         )}
 
@@ -174,10 +122,6 @@ function tituloPorModo(modo: Modo): string {
   switch (modo) {
     case 'login':
       return 'Inicia sesión para continuar'
-    case 'signup':
-      return 'Crea tu cuenta'
-    case 'confirmar':
-      return 'Confirma tu correo'
     case 'olvide':
       return 'Recupera tu contraseña'
     case 'restablecer':
