@@ -12,9 +12,16 @@ GRANT USAGE ON SCHEMA api TO web_anon, admin, agente, cliente;
 -- SERIAL para poder hacer INSERT vía PostgREST.
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA api TO admin, agente, cliente;
 
+-- ---- empresas ----
+GRANT SELECT, INSERT, UPDATE, DELETE ON api.empresas TO admin;
+GRANT SELECT ON api.empresas TO agente, cliente;
+
 -- ---- usuarios ----
+-- agente tiene INSERT porque da de alta usuarios cliente (ver
+-- 06_rls_policies.sql: solo puede crear filas con rol='cliente').
+-- cliente NO tiene INSERT: no hay auto-registro, lo crea admin/agente.
 GRANT SELECT, INSERT, UPDATE, DELETE ON api.usuarios TO admin;
-GRANT SELECT, UPDATE ON api.usuarios TO agente;
+GRANT SELECT, INSERT, UPDATE ON api.usuarios TO agente;
 GRANT SELECT, UPDATE ON api.usuarios TO cliente;
 
 -- ---- catálogos: categorias / prioridades / estados ----

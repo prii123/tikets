@@ -10,9 +10,11 @@ El sistema permitirá que los usuarios reporten incidencias o solicitudes (ticke
 
 Módulos que cubren estas tablas:
 
-1. **Usuarios y roles** — quién usa el sistema y qué permisos tiene.
+1. **Empresas, usuarios y roles** — qué empresa cliente reporta, quién usa el sistema y qué permisos tiene.
 2. **Tickets** — el núcleo: incidencias/solicitudes con su categoría, prioridad y estado.
 3. **Seguimiento** — comentarios, archivos adjuntos e historial de cambios.
+
+**Regla de negocio clave:** no hay auto-registro. Solo un **admin** o **agente** puede crear usuarios, y todo usuario `cliente` queda asociado a una **empresa**. Cualquier usuario de esa empresa puede ver y dar seguimiento a los tickets de sus compañeros (no solo a los que él mismo creó).
 
 ---
 
@@ -46,9 +48,23 @@ Se guarda una copia del rol en `usuarios.rol` solo como referencia para la inter
 
 ---
 
-### 2. `usuarios`
+### 2. `empresas`
 
-Perfil local de las personas que interactúan con el sistema. Es un **espejo mínimo de Cognito**: se crea/actualiza al primer login (o vía trigger Lambda Post-Confirmation de Cognito). Sin contraseñas — eso vive en Cognito.
+Empresas cliente. Cada usuario con rol `cliente` pertenece a una; el personal interno (`admin`/`agente`) no pertenece a ninguna.
+
+| Campo       | Tipo         | Descripción                          |
+|-------------|--------------|---------------------------------------|
+| id          | INT PK AI    | Identificador de la empresa          |
+| nombre      | VARCHAR(150) | Nombre de la empresa (único)         |
+| descripcion | VARCHAR(255) | Descripción breve                    |
+| activa      | BOOLEAN      | Permite desactivar clientes sin borrar su historial |
+| creado_en   | TIMESTAMPTZ  | Fecha de alta                        |
+
+---
+
+### 3. `usuarios`
+
+Perfil local de las personas que interactúan con el sistema. Es un **espejo mínimo de Cognito**, pero a diferencia de un modelo de auto-registro, **no se crea solo**: únicamente `admin` o `agente` pueden dar de alta un usuario (primero se crea la cuenta en Cognito con `AdminCreateUser`, luego esta fila). Sin contraseñas — eso vive en Cognito.
 
 | Campo       | Tipo         | Descripción                                                  |
 |-------------|--------------|--------------------------------------------------------------|
@@ -58,12 +74,18 @@ Perfil local de las personas que interactúan con el sistema. Es un **espejo mí
 | email       | VARCHAR(150) | Correo (sincronizado desde Cognito)                          |
 | celular     | VARCHAR(20)  | Numer de celular                                             |
 | rol         | VARCHAR(30)  | Copia informativa del grupo de Cognito (admin/agente/cliente)|
+| empresa_id  | INT FK NULL  | Empresa a la que pertenece (`empresas.id`); obligatorio si `rol = 'cliente'`, NULL para admin/agente |
 | activo      | BOOLEAN      | Si la cuenta está habilitada en la aplicación                |
 | creado_en   | TIMESTAMPTZ  | Fecha de registro                                            |
 
+**Quién puede crear usuarios:**
+- `admin` — puede crear cualquier usuario (admin, agente o cliente).
+- `agente` — solo puede crear usuarios `cliente`, y debe asignarles una `empresa_id`.
+- `cliente` — no puede crear usuarios (ni a sí mismo ni a nadie más).
+
 ---
 
-### 3. `categorias`
+### 4. `categorias`
 
 Clasifica los tickets por área o tipo de problema (ej. Error del sistema, Solicitud de función, Facturación, Soporte técnico).
 
@@ -76,7 +98,7 @@ Clasifica los tickets por área o tipo de problema (ej. Error del sistema, Solic
 
 ---
 
-### 4. `prioridades`
+### 5. `prioridades`
 
 Nivel de urgencia del ticket (ej. Baja, Media, Alta, Crítica). Se maneja como tabla para poder agregar niveles sin tocar código.
 
@@ -88,7 +110,7 @@ Nivel de urgencia del ticket (ej. Baja, Media, Alta, Crítica). Se maneja como t
 
 ---
 
-### 5. `estados`
+### 6. `estados`
 
 Ciclo de vida del ticket (ej. Abierto, En progreso, En espera del usuario, Resuelto, Cerrado).
 
@@ -100,9 +122,9 @@ Ciclo de vida del ticket (ej. Abierto, En progreso, En espera del usuario, Resue
 
 ---
 
-### 6. `tickets`
+### 7. `tickets`
 
-Tabla principal del sistema. Cada fila es una incidencia o solicitud reportada.
+Tabla principal del sistema. Cada fila es una incidencia o solicitud reportada. Un usuario `cliente` ve **todos los tickets de su empresa**, no solo los que él creó — así cualquier compañero puede dar seguimiento.
 
 | Campo          | Tipo         | Descripción                                            |
 |----------------|--------------|--------------------------------------------------------|
@@ -120,7 +142,7 @@ Tabla principal del sistema. Cada fila es una incidencia o solicitud reportada.
 
 ---
 
-### 7. `comentarios`
+### 8. `comentarios`
 
 Conversación dentro de cada ticket: respuestas del agente, aclaraciones del usuario y notas internas del equipo.
 
@@ -135,7 +157,7 @@ Conversación dentro de cada ticket: respuestas del agente, aclaraciones del usu
 
 ---
 
-### 8. `adjuntos`
+### 9. `adjuntos`
 
 Archivos que acompañan al ticket o a un comentario (capturas de pantalla, logs, documentos).
 
@@ -152,7 +174,7 @@ Archivos que acompañan al ticket o a un comentario (capturas de pantalla, logs,
 
 ---
 
-### 9. `historial_tickets`
+### 10. `historial_tickets`
 
 Auditoría: registra cada cambio relevante de un ticket (cambio de estado, reasignación, cambio de prioridad). Permite reconstruir qué pasó y cuándo.
 
@@ -172,6 +194,7 @@ Auditoría: registra cada cambio relevante de un ticket (cambio de estado, reasi
 
 ```mermaid
 erDiagram
+    empresas ||--o{ usuarios : "agrupa (solo clientes)"
     usuarios ||--o{ tickets : "reporta"
     usuarios ||--o{ tickets : "atiende (asignado_a)"
     categorias ||--o{ tickets : "clasifica"
@@ -191,7 +214,8 @@ erDiagram
 - Motor de base de datos: **PostgreSQL** (requerido por PostgREST). Usar `TIMESTAMPTZ` para todas las fechas.
 - Definir los **grupos en Cognito** (`admin`, `agente`, `cliente`) y crear los roles equivalentes en PostgreSQL con sus `GRANT`.
 - Escribir las **políticas RLS** por tabla (ej. `cliente` solo ve tickets donde `usuario_id` = su usuario; `agente` ve los asignados; `admin` ve todo).
-- Definir cómo se sincroniza `usuarios` con Cognito: trigger **Lambda Post-Confirmation** vs. upsert en el primer login.
+- Construir la pantalla de administración para que admin/agente den de alta usuarios: primero crea la cuenta en Cognito (`AdminCreateUser` + `AdminAddUserToGroup`) y luego el espejo en `usuarios` con su `empresa_id`. Como el navegador no puede llamar `AdminCreateUser` directamente (requiere credenciales de servidor), esto necesita una función/endpoint intermedio (ej. Lambda) — no se puede hacer solo con PostgREST.
+- Quitar del frontend el flujo público de "Crear cuenta" (ya no aplica: no hay auto-registro, y a nivel de base de datos `cliente` ya no tiene permiso de `INSERT` en `usuarios`).
 - Decidir si se necesita **SLA** (tiempos máximos de respuesta/resolución) — implicaría una tabla adicional.
 - Notificaciones (correo o dentro de la app) cuando cambia el estado de un ticket — Cognito no cubre esto; evaluar SES/SNS.
 - Definir los endpoints que expone PostgREST (vistas/funciones para operaciones que no sean CRUD directo, ej. asignar ticket, cerrar ticket).

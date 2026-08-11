@@ -13,7 +13,7 @@ services:
     volumes:
       - tickets_pgdata:/var/lib/postgresql/data
       # Se montan uno a uno (en vez de la carpeta completa) para poder
-      # intercalar 09_set_passwords.sh al final manteniendo el orden 01-09.
+      # intercalar 08_set_passwords.sh al final manteniendo el orden 01-08.
       - ../database/01_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
       - ../database/02_indexes.sql:/docker-entrypoint-initdb.d/02_indexes.sql:ro
       - ../database/03_functions_triggers.sql:/docker-entrypoint-initdb.d/03_functions_triggers.sql:ro
@@ -21,8 +21,7 @@ services:
       - ../database/05_grants.sql:/docker-entrypoint-initdb.d/05_grants.sql:ro
       - ../database/06_rls_policies.sql:/docker-entrypoint-initdb.d/06_rls_policies.sql:ro
       - ../database/07_seed.sql:/docker-entrypoint-initdb.d/07_seed.sql:ro
-      - ../database/08_usuarios_self_signup.sql:/docker-entrypoint-initdb.d/08_usuarios_self_signup.sql:ro
-      - ./initdb/09_set_passwords.sh:/docker-entrypoint-initdb.d/09_set_passwords.sh:ro
+      - ./initdb/08_set_passwords.sh:/docker-entrypoint-initdb.d/08_set_passwords.sh:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     networks:

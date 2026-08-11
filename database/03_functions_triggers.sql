@@ -34,6 +34,17 @@ AS $$
     SELECT id FROM api.usuarios WHERE cognito_sub = api.current_cognito_sub()
 $$;
 
+-- Empresa del usuario actual (NULL para admin/agente, que no pertenecen
+-- a ninguna). SECURITY DEFINER por la misma razón que current_usuario_id():
+-- las políticas de "visibilidad por empresa" la usan y necesitan
+-- resolverla sin depender de sus propias políticas RLS.
+CREATE OR REPLACE FUNCTION api.current_empresa_id() RETURNS integer
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = api, pg_temp
+AS $$
+    SELECT empresa_id FROM api.usuarios WHERE id = api.current_usuario_id()
+$$;
+
 -- ---------------------------------------------------------
 -- Mantiene tickets.actualizado_en y controla cerrado_en según
 -- si el nuevo estado es terminal (estados.es_final).

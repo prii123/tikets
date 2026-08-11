@@ -8,10 +8,24 @@
 CREATE SCHEMA IF NOT EXISTS api;
 
 -- ---------------------------------------------------------
+-- empresas
+-- Empresas cliente. Cada usuario con rol 'cliente' pertenece a
+-- una; admin/agente son personal interno y no pertenecen a ninguna.
+-- ---------------------------------------------------------
+CREATE TABLE api.empresas (
+    id          SERIAL PRIMARY KEY,
+    nombre      VARCHAR(150) NOT NULL UNIQUE,
+    descripcion VARCHAR(255),
+    activa      BOOLEAN NOT NULL DEFAULT TRUE,
+    creado_en   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ---------------------------------------------------------
 -- usuarios
--- Espejo local de las cuentas de Cognito. Se sincroniza al
--- primer login o vía Lambda Post-Confirmation. No guarda
--- contraseñas: la autenticación vive en Cognito.
+-- Espejo local de las cuentas de Cognito. NO hay auto-registro:
+-- solo admin/agente pueden crear usuarios (ver 06_rls_policies.sql),
+-- típicamente después de crear la cuenta en Cognito con AdminCreateUser.
+-- No guarda contraseñas: la autenticación vive en Cognito.
 -- ---------------------------------------------------------
 CREATE TABLE api.usuarios (
     id          SERIAL PRIMARY KEY,
@@ -21,8 +35,12 @@ CREATE TABLE api.usuarios (
     celular     VARCHAR(20),
     rol         VARCHAR(30) NOT NULL DEFAULT 'cliente'
                 CHECK (rol IN ('admin', 'agente', 'cliente')),
+    empresa_id  INT REFERENCES api.empresas(id),
     activo      BOOLEAN NOT NULL DEFAULT TRUE,
-    creado_en   TIMESTAMPTZ NOT NULL DEFAULT now()
+    creado_en   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- Todo cliente pertenece a una empresa; admin/agente no pertenecen a ninguna.
+    CONSTRAINT usuarios_cliente_requiere_empresa
+        CHECK (rol <> 'cliente' OR empresa_id IS NOT NULL)
 );
 
 -- ---------------------------------------------------------

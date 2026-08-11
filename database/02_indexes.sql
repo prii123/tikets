@@ -4,6 +4,8 @@
 -- (Postgres no las indexa automáticamente, a diferencia de las PK).
 -- =========================================================
 
+CREATE INDEX idx_usuarios_empresa_id ON api.usuarios(empresa_id);
+
 CREATE INDEX idx_tickets_usuario_id   ON api.tickets(usuario_id);
 CREATE INDEX idx_tickets_asignado_a   ON api.tickets(asignado_a);
 CREATE INDEX idx_tickets_categoria_id ON api.tickets(categoria_id);
