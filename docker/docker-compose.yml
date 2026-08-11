@@ -47,24 +47,28 @@ services:
         condition: service_healthy
     ports:
       - "${POSTGREST_PORT:-3000}:3000"
+    volumes:
+      # Llave pública de Cognito (un solo JWK plano, no el JWKS completo
+      # envuelto en {"keys":[...]}) — ver el comentario de PGRST_JWT_SECRET
+      # más abajo sobre por qué.
+      - ./postgrest-jwt-secret.json:/etc/postgrest/jwt-secret.json:ro
     environment:
       PGRST_DB_URI: postgres://authenticator:${AUTHENTICATOR_PASSWORD}@postgres:5432/${POSTGRES_DB:-tickets}
       PGRST_DB_SCHEMAS: api
       PGRST_DB_ANON_ROLE: web_anon
-      # JSON del JWKS de tu User Pool de Cognito, FIJO (no una URL). Con
-      # PostgREST v14.13 descargar el JWKS por URL falla con "No suitable
-      # key or wrong key type" (PGRST301) aunque el kid sí exista ahí —
-      # parece un bug de esa versión con el fetch/parseo del JWKS remoto.
-      # Dándole el JSON ya resuelto se evita ese fetch por completo.
-      # Si Cognito llega a rotar sus llaves de firma, hay que actualizar
-      # PGRST_JWT_SECRET en .env con:
+      # Llave pública de Cognito para validar el JWT (RS256), leída de
+      # archivo con @ruta (ver docs de PostgREST: "jwt-secret"). Probamos
+      # primero con la URL del JWKS y luego con el JWKS completo como JSON
+      # fijo, y ambas fallaban con "No suitable key or wrong key type"
+      # (PGRST301) en v14.13 aunque el kid sí existía ahí. La docs de
+      # PostgREST muestran el jwt-secret como un JWK SUELTO (un solo
+      # objeto), no como un JWKS con "keys":[...] — con dos llaves en el
+      # array algo en el matching del kid se rompía. Aquí se usa solo la
+      # llave que de verdad firma tus tokens (confirmada decodificando un
+      # access token real). Si Cognito rota sus llaves de firma, regenera
+      # docker/postgrest-jwt-secret.json con la llave nueva:
       #   curl https://cognito-idp.<region>.amazonaws.com/<pool-id>/.well-known/jwks.json
-      #
-      # Sin valor a propósito: así Compose toma el valor tal cual del
-      # .env (PGRST_JWT_SECRET=...) sin que el YAML lo reinterprete —
-      # ese JSON tiene { } y comillas que romperían la sintaxis YAML si
-      # se sustituyera aquí como ${VAR}.
-      PGRST_JWT_SECRET:
+      PGRST_JWT_SECRET: "@/etc/postgrest/jwt-secret.json"
       PGRST_JWT_SECRET_IS_BASE64: "false"
       # Cognito mete el rol en "cognito:groups" (array), no en "role".
       # Este JSONPath toma el primer grupo del usuario como rol de Postgres.
