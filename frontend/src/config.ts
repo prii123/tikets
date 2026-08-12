@@ -1,5 +1,11 @@
 function required(name: string, value: string | undefined): string {
-  if (!value) throw new Error(`Falta la variable de entorno ${name} (revisa tu .env.local)`)
+  if (!value) {
+    throw new Error(
+      `Falta la variable de entorno ${name}. En local: revisa frontend/.env.local. ` +
+        `Si esto corre desde el contenedor Docker: revisa docker/.env y reconstruye con ` +
+        `"docker compose build frontend" (estas variables se incrustan en el build, no se leen en caliente).`
+    )
+  }
   return value
 }
 
