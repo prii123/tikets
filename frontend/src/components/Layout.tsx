@@ -51,6 +51,11 @@ export function Layout() {
               <NavLink to="/admin/empresas" className={linkClase}>
                 Empresas
               </NavLink>
+              {rol === 'admin' && (
+                <NavLink to="/admin/catalogos" className={linkClase}>
+                  Categorías y prioridades
+                </NavLink>
+              )}
             </>
           )}
         </nav>
