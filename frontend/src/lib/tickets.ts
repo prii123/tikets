@@ -14,7 +14,7 @@ const DETALLE_SELECT =
   'categoria:categorias(*),' +
   'prioridad:prioridades(*),' +
   'estado:estados(*),' +
-  'reportado_por:usuarios!tickets_usuario_id_fkey(id,nombre,email),' +
+  'reportado_por:usuarios!tickets_usuario_id_fkey(id,nombre,email,empresa:empresas(id,nombre)),' +
   'asignado:usuarios!tickets_asignado_a_fkey(id,nombre,email),' +
   'comentarios(id,ticket_id,usuario_id,contenido,es_interno,creado_en,autor:usuarios(nombre,rol)),' +
   'adjuntos(id,ticket_id,comentario_id,nombre_archivo,ruta,tipo_mime,tamano_bytes,subido_en),' +

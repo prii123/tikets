@@ -87,7 +87,7 @@ export interface Ticket {
   categoria?: Categoria
   prioridad?: Prioridad
   estado?: Estado
-  reportado_por?: Pick<Usuario, 'id' | 'nombre' | 'email'>
+  reportado_por?: Pick<Usuario, 'id' | 'nombre' | 'email'> & { empresa?: Pick<Empresa, 'id' | 'nombre'> | null }
   asignado?: Pick<Usuario, 'id' | 'nombre' | 'email'> | null
   comentarios?: Comentario[]
   adjuntos?: Adjunto[]

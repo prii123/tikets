@@ -139,6 +139,10 @@ export function TicketDetailPage() {
             <dd>{ticket.reportado_por?.nombre}</dd>
           </div>
           <div>
+            <dt className="text-slate-400">Empresa</dt>
+            <dd>{ticket.reportado_por?.empresa?.nombre ?? '—'}</dd>
+          </div>
+          <div>
             <dt className="text-slate-400">Asignado a</dt>
             <dd>{ticket.asignado?.nombre ?? 'Sin asignar'}</dd>
           </div>
