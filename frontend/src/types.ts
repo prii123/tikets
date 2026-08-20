@@ -4,6 +4,7 @@ export interface Empresa {
   id: number
   nombre: string
   descripcion: string | null
+  correo: string | null
   activa: boolean
   creado_en: string
 }

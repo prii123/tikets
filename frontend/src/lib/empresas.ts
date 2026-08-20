@@ -6,7 +6,7 @@ export function listarEmpresas(token: string): Promise<Empresa[]> {
 }
 
 export function crearEmpresa(
-  datos: { nombre: string; descripcion?: string | null },
+  datos: { nombre: string; descripcion?: string | null; correo?: string | null },
   token: string
 ): Promise<Empresa[]> {
   return api.post<Empresa[]>('/empresas', datos, token)
@@ -14,7 +14,7 @@ export function crearEmpresa(
 
 export function actualizarEmpresa(
   id: number,
-  cambios: Partial<Pick<Empresa, 'nombre' | 'descripcion' | 'activa'>>,
+  cambios: Partial<Pick<Empresa, 'nombre' | 'descripcion' | 'correo' | 'activa'>>,
   token: string
 ): Promise<Empresa[]> {
   return api.patch<Empresa[]>(`/empresas?id=eq.${id}`, cambios, token)

@@ -57,6 +57,7 @@ Empresas cliente. Cada usuario con rol `cliente` pertenece a una; el personal in
 | id          | INT PK AI    | Identificador de la empresa          |
 | nombre      | VARCHAR(150) | Nombre de la empresa (único)         |
 | descripcion | VARCHAR(255) | Descripción breve                    |
+| correo      | VARCHAR(255) | Correo de contacto de la empresa (opcional) |
 | activa      | BOOLEAN      | Permite desactivar clientes sin borrar su historial |
 | creado_en   | TIMESTAMPTZ  | Fecha de alta                        |
 
@@ -126,12 +127,15 @@ Ciclo de vida del ticket (ej. Abierto, En progreso, En espera del usuario, Resue
 
 Tabla principal del sistema. Cada fila es una incidencia o solicitud reportada. Un usuario `cliente` ve **todos los tickets de su empresa**, no solo los que él creó — así cualquier compañero puede dar seguimiento.
 
+`usuario_id` y `creado_por_id` casi siempre son la misma persona (un cliente reportando su propio ticket), pero se separan para el caso en que un **agente registra un ticket a nombre de un cliente** (ej. reporte telefónico): ahí `usuario_id` sigue siendo el cliente dueño del ticket (de eso sale la empresa y quién más lo puede ver) y `creado_por_id` es el agente que realmente lo escribió. El frontend muestra un aviso ("Registrado por [agente] a nombre del cliente") cuando los dos campos difieren. Un `admin`/`agente` puede crear un ticket a nombre de cualquier cliente; un `cliente` solo puede crear a su propio nombre y solo puede acreditarse la creación a sí mismo (RLS lo obliga).
+
 | Campo          | Tipo         | Descripción                                            |
 |----------------|--------------|--------------------------------------------------------|
 | id             | INT PK AI    | Identificador del ticket (folio)                       |
 | titulo         | VARCHAR(150) | Resumen corto del problema                             |
 | descripcion    | TEXT         | Detalle completo del problema o solicitud              |
-| usuario_id     | INT FK       | Quién reportó el ticket (`usuarios.id`)                |
+| usuario_id     | INT FK       | Dueño del ticket (`usuarios.id`) — normalmente el cliente |
+| creado_por_id  | INT FK       | Quién lo registró de verdad (`usuarios.id`) — el cliente mismo, o un agente si lo creó a su nombre |
 | asignado_a     | INT FK NULL  | Agente responsable (`usuarios.id`), null si sin asignar|
 | categoria_id   | INT FK       | Referencia a `categorias.id`                           |
 | prioridad_id   | INT FK       | Referencia a `prioridades.id`                          |
@@ -176,16 +180,18 @@ Archivos que acompañan al ticket o a un comentario (capturas de pantalla, logs,
 
 ### 10. `historial_tickets`
 
-Auditoría: registra cada cambio relevante de un ticket (cambio de estado, reasignación, cambio de prioridad). Permite reconstruir qué pasó y cuándo.
+Auditoría: registra cada cambio relevante de un ticket (cambio de estado, reasignación, cambio de prioridad). Permite reconstruir qué pasó y cuándo. Se llena sola vía trigger (`03_functions_triggers.sql`), nunca por inserción directa.
+
+`valor_anterior`/`valor_nuevo` guardan el **nombre legible** (ej. "Resuelto", "Laura Gómez"), no el id crudo de la fila referenciada — es una foto de cómo se llamaba en ese momento, no cambia si después se renombra o se borra ese estado/prioridad/usuario. (Antes del 2026-08-20 se guardaba el id crudo; las entradas creadas antes de ese fix se quedan como estaban, no se migraron retroactivamente.)
 
 | Campo          | Tipo         | Descripción                                        |
 |----------------|--------------|----------------------------------------------------|
 | id             | INT PK AI    | Identificador del registro                         |
 | ticket_id      | INT FK       | Ticket afectado (`tickets.id`)                     |
 | usuario_id     | INT FK       | Quién hizo el cambio (`usuarios.id`)               |
-| campo          | VARCHAR(50)  | Campo modificado (estado, prioridad, asignado_a…)  |
-| valor_anterior | VARCHAR(255) | Valor antes del cambio                             |
-| valor_nuevo    | VARCHAR(255) | Valor después del cambio                           |
+| campo          | VARCHAR(50)  | Campo modificado (estado_id, prioridad_id, asignado_a) |
+| valor_anterior | VARCHAR(255) | Nombre legible del valor antes del cambio          |
+| valor_nuevo    | VARCHAR(255) | Nombre legible del valor después del cambio        |
 | fecha          | DATETIME     | Cuándo ocurrió el cambio                           |
 
 ---
@@ -216,6 +222,8 @@ erDiagram
 - Escribir las **políticas RLS** por tabla (ej. `cliente` solo ve tickets donde `usuario_id` = su usuario; `agente` ve los asignados; `admin` ve todo).
 - ~~Construir la pantalla de administración para que admin/agente den de alta usuarios~~ — **Hecho.** `/admin/empresas` (crear/activar empresas, solo admin) y `/admin/usuarios` (crear usuarios y asociarlos a una empresa; admin puede asignar cualquier rol, agente solo puede crear `cliente`). Como el navegador no puede llamar `AdminCreateUser` de Cognito directamente, se agregó `lambda/crear-usuario/`: una Lambda con Function URL pública que valida el JWT de quien llama (debe ser admin/agente) antes de crear la cuenta. La contraseña temporal se muestra en pantalla para que el admin la comparta manualmente (no hay envío de correo automático en este flujo).
 - ~~Quitar del frontend el flujo público de "Crear cuenta"~~ — **Hecho.**
+- ~~CRUD de categorías y prioridades~~ — **Hecho.** `/admin/catalogos`, solo admin (agente tiene RLS de solo lectura ahí).
+- ~~Que un agente pueda crear un ticket a nombre de un cliente, con marca de quién lo creó~~ — **Hecho.** Ver `tickets.creado_por_id` en la tabla de arriba y el selector empresa→cliente en "Nuevo ticket".
 - Decidir si se necesita **SLA** (tiempos máximos de respuesta/resolución) — implicaría una tabla adicional.
 - Notificaciones (correo o dentro de la app) cuando cambia el estado de un ticket — Cognito no cubre esto; evaluar SES/SNS.
 - Definir los endpoints que expone PostgREST (vistas/funciones para operaciones que no sean CRUD directo, ej. asignar ticket, cerrar ticket).

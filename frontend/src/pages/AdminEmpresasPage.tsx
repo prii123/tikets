@@ -13,6 +13,7 @@ export function AdminEmpresasPage() {
 
   const [nombre, setNombre] = useState('')
   const [descripcion, setDescripcion] = useState('')
+  const [correo, setCorreo] = useState('')
   const [creando, setCreando] = useState(false)
 
   function cargar() {
@@ -32,9 +33,10 @@ export function AdminEmpresasPage() {
     setError(null)
     setCreando(true)
     try {
-      await crearEmpresa({ nombre, descripcion: descripcion || null }, token)
+      await crearEmpresa({ nombre, descripcion: descripcion || null, correo: correo || null }, token)
       setNombre('')
       setDescripcion('')
+      setCorreo('')
       cargar()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo crear la empresa')
@@ -62,24 +64,31 @@ export function AdminEmpresasPage() {
       {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
       {esAdmin && (
-        <form onSubmit={handleCrear} className="grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:grid-cols-3">
+        <form onSubmit={handleCrear} className="grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:grid-cols-2">
           <input
             required
             placeholder="Nombre de la empresa"
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-1"
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          />
+          <input
+            type="email"
+            placeholder="Correo de contacto (opcional)"
+            value={correo}
+            onChange={(e) => setCorreo(e.target.value)}
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
           />
           <input
             placeholder="Descripción (opcional)"
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-1"
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
           />
           <button
             type="submit"
             disabled={creando}
-            className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60 sm:col-span-2"
           >
             {creando ? 'Creando...' : 'Crear empresa'}
           </button>
@@ -91,6 +100,7 @@ export function AdminEmpresasPage() {
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
               <th className="px-4 py-2">Nombre</th>
+              <th className="px-4 py-2">Correo</th>
               <th className="px-4 py-2">Descripción</th>
               <th className="px-4 py-2">Estado</th>
               {esAdmin && <th className="px-4 py-2"></th>}
@@ -100,6 +110,7 @@ export function AdminEmpresasPage() {
             {empresas.map((emp) => (
               <tr key={emp.id} className="hover:bg-slate-50">
                 <td className="px-4 py-3 font-medium text-slate-900">{emp.nombre}</td>
+                <td className="px-4 py-3 text-slate-600">{emp.correo ?? '—'}</td>
                 <td className="px-4 py-3 text-slate-600">{emp.descripcion ?? '—'}</td>
                 <td className="px-4 py-3">
                   <span

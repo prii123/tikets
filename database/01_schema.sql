@@ -16,7 +16,7 @@ CREATE TABLE api.empresas (
     id          SERIAL PRIMARY KEY,
     nombre      VARCHAR(150) NOT NULL UNIQUE,
     descripcion VARCHAR(255),
-    correo VARCHAR(255),
+    correo      VARCHAR(255),
     activa      BOOLEAN NOT NULL DEFAULT TRUE,
     creado_en   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
