@@ -82,24 +82,41 @@ CREATE TRIGGER trg_tickets_before_update
 -- tiene INSERT directo sobre historial_tickets: solo se llena
 -- a través de este trigger.
 -- ---------------------------------------------------------
+-- Guarda NOMBRES legibles en valor_anterior/valor_nuevo (no los IDs
+-- crudos de la FK): así el historial se puede mostrar tal cual sin que
+-- el frontend tenga que resolver por separado a qué estado/prioridad/
+-- usuario correspondía cada id, y queda como una foto de cómo se
+-- llamaba en ese momento (aunque después se renombre o se borre).
 CREATE OR REPLACE FUNCTION api.tickets_registrar_historial() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = api, pg_temp
 AS $$
+DECLARE
+    v_anterior TEXT;
+    v_nuevo    TEXT;
 BEGIN
     IF NEW.estado_id IS DISTINCT FROM OLD.estado_id THEN
+        SELECT nombre INTO v_anterior FROM api.estados WHERE id = OLD.estado_id;
+        SELECT nombre INTO v_nuevo    FROM api.estados WHERE id = NEW.estado_id;
         INSERT INTO api.historial_tickets (ticket_id, usuario_id, campo, valor_anterior, valor_nuevo)
-        VALUES (NEW.id, api.current_usuario_id(), 'estado_id', OLD.estado_id::text, NEW.estado_id::text);
+        VALUES (NEW.id, api.current_usuario_id(), 'estado_id', v_anterior, v_nuevo);
     END IF;
 
     IF NEW.prioridad_id IS DISTINCT FROM OLD.prioridad_id THEN
+        SELECT nombre INTO v_anterior FROM api.prioridades WHERE id = OLD.prioridad_id;
+        SELECT nombre INTO v_nuevo    FROM api.prioridades WHERE id = NEW.prioridad_id;
         INSERT INTO api.historial_tickets (ticket_id, usuario_id, campo, valor_anterior, valor_nuevo)
-        VALUES (NEW.id, api.current_usuario_id(), 'prioridad_id', OLD.prioridad_id::text, NEW.prioridad_id::text);
+        VALUES (NEW.id, api.current_usuario_id(), 'prioridad_id', v_anterior, v_nuevo);
     END IF;
 
     IF NEW.asignado_a IS DISTINCT FROM OLD.asignado_a THEN
+        SELECT nombre INTO v_anterior FROM api.usuarios WHERE id = OLD.asignado_a;
+        SELECT nombre INTO v_nuevo    FROM api.usuarios WHERE id = NEW.asignado_a;
         INSERT INTO api.historial_tickets (ticket_id, usuario_id, campo, valor_anterior, valor_nuevo)
-        VALUES (NEW.id, api.current_usuario_id(), 'asignado_a', OLD.asignado_a::text, NEW.asignado_a::text);
+        VALUES (
+            NEW.id, api.current_usuario_id(), 'asignado_a',
+            COALESCE(v_anterior, 'Sin asignar'), COALESCE(v_nuevo, 'Sin asignar')
+        );
     END IF;
 
     RETURN NEW;

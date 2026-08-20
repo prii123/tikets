@@ -13,6 +13,12 @@ import {
 import { EstadoBadge, PrioridadBadge } from '../components/Badges'
 import type { Estado, Prioridad, Ticket, Usuario } from '../types'
 
+const CAMPO_LABEL: Record<string, string> = {
+  estado_id: 'el estado',
+  prioridad_id: 'la prioridad',
+  asignado_a: 'el agente asignado',
+}
+
 export function TicketDetailPage() {
   const { id } = useParams<{ id: string }>()
   const ticketId = Number(id)
@@ -326,9 +332,9 @@ export function TicketDetailPage() {
               .map((h) => (
                 <li key={h.id} className="border-l-2 border-slate-200 pl-3">
                   <span className="font-medium text-slate-800">{h.usuario?.nombre ?? 'Sistema'}</span> cambió{' '}
-                  <span className="font-medium">{h.campo}</span> de{' '}
+                  <span className="font-medium">{CAMPO_LABEL[h.campo] ?? h.campo}</span> de{' '}
                   <span className="text-slate-500">{h.valor_anterior ?? '—'}</span> a{' '}
-                  <span className="text-slate-500">{h.valor_nuevo ?? '—'}</span>
+                  <span className="text-slate-500">{h.valor_nuevo ?? '—'}</span>{' '}
                   <span className="ml-2 text-xs text-slate-400">
                     {new Date(h.fecha).toLocaleString('es-MX')}
                   </span>
