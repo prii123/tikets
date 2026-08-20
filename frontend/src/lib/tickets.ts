@@ -1,4 +1,4 @@
-import { api } from './api'
+import { api, type Pagina } from './api'
 import type { Categoria, Comentario, Estado, Prioridad, Ticket, Usuario } from '../types'
 
 const LISTA_SELECT =
@@ -21,8 +21,22 @@ const DETALLE_SELECT =
   'adjuntos(id,ticket_id,comentario_id,nombre_archivo,ruta,tipo_mime,tamano_bytes,subido_en),' +
   'historial_tickets(id,ticket_id,usuario_id,campo,valor_anterior,valor_nuevo,fecha,usuario:usuarios(nombre))'
 
-export function listarTickets(token: string): Promise<Ticket[]> {
-  return api.get<Ticket[]>(`/tickets?select=${LISTA_SELECT}&order=creado_en.desc`, token)
+// estadoId filtra en el servidor (no solo en la página actual, para que
+// paginación + filtro se lleven bien: si filtraras solo del lado del
+// cliente, el filtro solo vería los tickets ya cargados de esa página).
+export function listarTicketsPagina(
+  pagina: number,
+  porPagina: number,
+  estadoId: number | null,
+  token: string
+): Promise<Pagina<Ticket>> {
+  const filtro = estadoId ? `&estado_id=eq.${estadoId}` : ''
+  return api.getPagina<Ticket>(
+    `/tickets?select=${LISTA_SELECT}&order=creado_en.desc${filtro}`,
+    pagina,
+    porPagina,
+    token
+  )
 }
 
 export async function obtenerTicket(id: number, token: string): Promise<Ticket | null> {

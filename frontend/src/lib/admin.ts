@@ -1,6 +1,15 @@
 import { config } from '../config'
-import { api, ApiError } from './api'
+import { api, ApiError, type Pagina } from './api'
 import type { Rol, Usuario } from '../types'
+
+export function listarUsuariosPagina(pagina: number, porPagina: number, token: string): Promise<Pagina<Usuario>> {
+  return api.getPagina<Usuario>(
+    '/usuarios?select=id,nombre,email,rol,activo,empresa:empresas(id,nombre)&order=creado_en.desc',
+    pagina,
+    porPagina,
+    token
+  )
+}
 
 export interface NuevoUsuarioInput {
   email: string

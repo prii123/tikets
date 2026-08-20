@@ -1,11 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { crearUsuario } from '../lib/admin'
+import { crearUsuario, listarUsuariosPagina } from '../lib/admin'
 import { listarEmpresas } from '../lib/empresas'
-import { api } from '../lib/api'
+import { Pagination } from '../components/Pagination'
 import type { Empresa, Rol, Usuario } from '../types'
 
 const ROL_LABEL: Record<Rol, string> = { admin: 'Administrador', agente: 'Agente', cliente: 'Cliente' }
+const POR_PAGINA = 10
 
 export function AdminUsuariosPage() {
   const { token, rol: rolPropio } = useAuth()
@@ -13,6 +14,8 @@ export function AdminUsuariosPage() {
 
   const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
+  const [total, setTotal] = useState(0)
+  const [pagina, setPagina] = useState(1)
   const [cargando, setCargando] = useState(true)
 
   const [nombre, setNombre] = useState('')
@@ -24,21 +27,25 @@ export function AdminUsuariosPage() {
   const [error, setError] = useState<string | null>(null)
   const [resultado, setResultado] = useState<{ email: string; passwordTemporal: string } | null>(null)
 
+  // el selector de empresa del formulario necesita la lista completa (no
+  // paginada); solo se carga una vez.
+  useEffect(() => {
+    if (!token) return
+    listarEmpresas(token).then(setEmpresas)
+  }, [token])
+
   function cargar() {
     if (!token) return
     setCargando(true)
-    Promise.all([
-      listarEmpresas(token),
-      api.get<Usuario[]>('/usuarios?select=id,nombre,email,rol,activo,empresa:empresas(id,nombre)&order=creado_en.desc', token),
-    ])
-      .then(([emp, users]) => {
-        setEmpresas(emp)
-        setUsuarios(users)
+    listarUsuariosPagina(pagina, POR_PAGINA, token)
+      .then(({ datos, total: totalFilas }) => {
+        setUsuarios(datos)
+        setTotal(totalFilas)
       })
       .finally(() => setCargando(false))
   }
 
-  useEffect(cargar, [token])
+  useEffect(cargar, [token, pagina])
 
   // un agente solo puede crear clientes; si no es admin, el selector de
   // rol queda fijo en "cliente" (coincide con lo que valida la Lambda y RLS).
@@ -201,6 +208,10 @@ export function AdminUsuariosPage() {
             ))}
           </tbody>
         </table>
+        {usuarios.length === 0 && (
+          <p className="px-4 py-8 text-center text-slate-400">Aún no hay usuarios registrados.</p>
+        )}
+        <Pagination pagina={pagina} porPagina={POR_PAGINA} total={total} onCambiar={setPagina} />
       </div>
     </div>
   )

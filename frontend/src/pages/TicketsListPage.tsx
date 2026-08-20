@@ -1,57 +1,73 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { listarTickets } from '../lib/tickets'
+import { listarEstados, listarTicketsPagina } from '../lib/tickets'
 import { EstadoBadge, PrioridadBadge } from '../components/Badges'
-import type { Ticket } from '../types'
+import { Pagination } from '../components/Pagination'
+import type { Estado, Ticket } from '../types'
+
+const POR_PAGINA = 15
 
 export function TicketsListPage() {
   const { token, rol } = useAuth()
   const [tickets, setTickets] = useState<Ticket[]>([])
+  const [total, setTotal] = useState(0)
+  const [estados, setEstados] = useState<Estado[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filtroEstado, setFiltroEstado] = useState<string>('todos')
+  const [filtroEstadoId, setFiltroEstadoId] = useState<number | ''>('')
+  const [pagina, setPagina] = useState(1)
 
   useEffect(() => {
     if (!token) return
-    listarTickets(token)
-      .then(setTickets)
-      .catch((err) => setError(err instanceof Error ? err.message : 'Error al cargar tickets'))
-      .finally(() => setCargando(false))
+    listarEstados(token).then(setEstados)
   }, [token])
 
-  const estadosDisponibles = useMemo(() => {
-    const nombres = new Set(tickets.map((t) => t.estado?.nombre).filter((n): n is string => !!n))
-    return Array.from(nombres)
-  }, [tickets])
-
-  const ticketsFiltrados =
-    filtroEstado === 'todos' ? tickets : tickets.filter((t) => t.estado?.nombre === filtroEstado)
-
-  if (cargando) return <p className="text-slate-500">Cargando tickets...</p>
-  if (error) return <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+  useEffect(() => {
+    if (!token) return
+    setCargando(true)
+    listarTicketsPagina(pagina, POR_PAGINA, filtroEstadoId || null, token)
+      .then(({ datos, total: totalFilas }) => {
+        setTickets(datos)
+        setTotal(totalFilas)
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : 'Error al cargar tickets'))
+      .finally(() => setCargando(false))
+  }, [token, pagina, filtroEstadoId])
 
   return (
     <div>
+      {error && <p className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900">
           {rol === 'cliente' ? 'Mis tickets' : 'Tickets'}
         </h1>
         <select
-          value={filtroEstado}
-          onChange={(e) => setFiltroEstado(e.target.value)}
+          value={filtroEstadoId}
+          onChange={(e) => {
+            // cambia filtro y vuelve a la página 1 en el MISMO evento (no en
+            // un useEffect aparte): React agrupa ambos setState en un solo
+            // render, así el efecto que pide los datos ya ve pagina=1 y
+            // nunca llega a pedir un offset que no existe para el filtro
+            // nuevo (si no, PostgREST responde 416 con la página vieja).
+            setFiltroEstadoId(e.target.value ? Number(e.target.value) : '')
+            setPagina(1)
+          }}
           className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
         >
-          <option value="todos">Todos los estados</option>
-          {estadosDisponibles.map((nombre) => (
-            <option key={nombre} value={nombre}>
-              {nombre}
+          <option value="">Todos los estados</option>
+          {estados.map((e) => (
+            <option key={e.id} value={e.id}>
+              {e.nombre}
             </option>
           ))}
         </select>
       </div>
 
-      {ticketsFiltrados.length === 0 ? (
+      {cargando ? (
+        <p className="text-slate-500">Cargando tickets...</p>
+      ) : tickets.length === 0 ? (
         <p className="rounded-md border border-dashed border-slate-300 px-4 py-8 text-center text-slate-500">
           No hay tickets para mostrar.
         </p>
@@ -70,7 +86,7 @@ export function TicketsListPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {ticketsFiltrados.map((t) => (
+              {tickets.map((t) => (
                 <tr key={t.id} className="hover:bg-slate-50">
                   <td className="px-4 py-3">
                     <Link to={`/tickets/${t.id}`} className="font-medium text-blue-600 hover:underline">
@@ -91,6 +107,7 @@ export function TicketsListPage() {
               ))}
             </tbody>
           </table>
+          <Pagination pagina={pagina} porPagina={POR_PAGINA} total={total} onCambiar={setPagina} />
         </div>
       )}
     </div>

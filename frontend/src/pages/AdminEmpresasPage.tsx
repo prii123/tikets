@@ -1,13 +1,18 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { actualizarEmpresa, crearEmpresa, listarEmpresas } from '../lib/empresas'
+import { actualizarEmpresa, crearEmpresa, listarEmpresasPagina } from '../lib/empresas'
+import { Pagination } from '../components/Pagination'
 import type { Empresa } from '../types'
+
+const POR_PAGINA = 10
 
 export function AdminEmpresasPage() {
   const { token, rol } = useAuth()
   const esAdmin = rol === 'admin'
 
   const [empresas, setEmpresas] = useState<Empresa[]>([])
+  const [total, setTotal] = useState(0)
+  const [pagina, setPagina] = useState(1)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -19,13 +24,16 @@ export function AdminEmpresasPage() {
   function cargar() {
     if (!token) return
     setCargando(true)
-    listarEmpresas(token)
-      .then(setEmpresas)
+    listarEmpresasPagina(pagina, POR_PAGINA, token)
+      .then(({ datos, total: totalFilas }) => {
+        setEmpresas(datos)
+        setTotal(totalFilas)
+      })
       .catch((err) => setError(err instanceof Error ? err.message : 'No se pudieron cargar las empresas'))
       .finally(() => setCargando(false))
   }
 
-  useEffect(cargar, [token])
+  useEffect(cargar, [token, pagina])
 
   async function handleCrear(e: FormEvent) {
     e.preventDefault()
@@ -138,6 +146,7 @@ export function AdminEmpresasPage() {
         {empresas.length === 0 && (
           <p className="px-4 py-8 text-center text-slate-400">Aún no hay empresas registradas.</p>
         )}
+        <Pagination pagina={pagina} porPagina={POR_PAGINA} total={total} onCambiar={setPagina} />
       </div>
     </div>
   )

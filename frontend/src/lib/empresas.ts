@@ -1,8 +1,15 @@
-import { api } from './api'
+import { api, type Pagina } from './api'
 import type { Empresa, Usuario } from '../types'
 
+// Sin paginar: para selectores <select> (nuevo ticket, nuevo usuario) que
+// necesitan la lista completa, no una página.
 export function listarEmpresas(token: string): Promise<Empresa[]> {
   return api.get<Empresa[]>('/empresas?order=nombre.asc', token)
+}
+
+// Paginada: para la tabla de administración de empresas.
+export function listarEmpresasPagina(pagina: number, porPagina: number, token: string): Promise<Pagina<Empresa>> {
+  return api.getPagina<Empresa>('/empresas?order=nombre.asc', pagina, porPagina, token)
 }
 
 export function crearEmpresa(
