@@ -21,16 +21,18 @@ const DETALLE_SELECT =
   'adjuntos(id,ticket_id,comentario_id,nombre_archivo,ruta,tipo_mime,tamano_bytes,subido_en),' +
   'historial_tickets(id,ticket_id,usuario_id,campo,valor_anterior,valor_nuevo,fecha,usuario:usuarios(nombre))'
 
-// estadoId filtra en el servidor (no solo en la página actual, para que
+// estadoIds filtra en el servidor (no solo en la página actual, para que
 // paginación + filtro se lleven bien: si filtraras solo del lado del
 // cliente, el filtro solo vería los tickets ya cargados de esa página).
+// Puede ser varios ids a la vez (ej. el grupo "estados intermedios" del
+// stepper de TicketsListPage agrupa dos estados).
 export function listarTicketsPagina(
   pagina: number,
   porPagina: number,
-  estadoId: number | null,
+  estadoIds: number[] | null,
   token: string
 ): Promise<Pagina<Ticket>> {
-  const filtro = estadoId ? `&estado_id=eq.${estadoId}` : ''
+  const filtro = estadoIds && estadoIds.length > 0 ? `&estado_id=in.(${estadoIds.join(',')})` : ''
   return api.getPagina<Ticket>(
     `/tickets?select=${LISTA_SELECT}&order=creado_en.desc${filtro}`,
     pagina,

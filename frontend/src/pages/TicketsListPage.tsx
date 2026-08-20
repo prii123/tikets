@@ -1,12 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { listarEstados, listarTicketsPagina } from '../lib/tickets'
 import { EstadoBadge, PrioridadBadge } from '../components/Badges'
 import { Pagination } from '../components/Pagination'
+import { Stepper } from '../components/Stepper'
 import type { Estado, Ticket } from '../types'
 
 const POR_PAGINA = 15
+
+type GrupoEstado = 'abiertos' | 'intermedios' | 'cerrados'
+
+const PASOS: { clave: GrupoEstado; etiqueta: string }[] = [
+  { clave: 'abiertos', etiqueta: 'Abiertos' },
+  { clave: 'intermedios', etiqueta: 'En proceso' },
+  { clave: 'cerrados', etiqueta: 'Cerrados' },
+]
 
 export function TicketsListPage() {
   const { token, rol } = useAuth()
@@ -15,7 +24,7 @@ export function TicketsListPage() {
   const [estados, setEstados] = useState<Estado[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filtroEstadoId, setFiltroEstadoId] = useState<number | ''>('')
+  const [grupoActivo, setGrupoActivo] = useState<GrupoEstado>('abiertos')
   const [pagina, setPagina] = useState(1)
 
   useEffect(() => {
@@ -23,46 +32,49 @@ export function TicketsListPage() {
     listarEstados(token).then(setEstados)
   }, [token])
 
+  // Agrupa los estados del catálogo en los 3 pasos del stepper:
+  // "Abierto" es su propio grupo por nombre; "cerrados" es cualquier
+  // estado marcado es_final; "intermedios" es todo lo demás (así, si
+  // algún día se agrega un estado intermedio nuevo desde
+  // /admin/catalogos, cae solo ahí sin tocar código).
+  const gruposEstado = useMemo(() => {
+    const abiertos = estados.filter((e) => e.nombre === 'Abierto').map((e) => e.id)
+    const cerrados = estados.filter((e) => e.es_final).map((e) => e.id)
+    const intermedios = estados.filter((e) => !e.es_final && e.nombre !== 'Abierto').map((e) => e.id)
+    return { abiertos, intermedios, cerrados } satisfies Record<GrupoEstado, number[]>
+  }, [estados])
+
   useEffect(() => {
-    if (!token) return
+    if (!token || estados.length === 0) return
     setCargando(true)
-    listarTicketsPagina(pagina, POR_PAGINA, filtroEstadoId || null, token)
+    listarTicketsPagina(pagina, POR_PAGINA, gruposEstado[grupoActivo], token)
       .then(({ datos, total: totalFilas }) => {
         setTickets(datos)
         setTotal(totalFilas)
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Error al cargar tickets'))
       .finally(() => setCargando(false))
-  }, [token, pagina, filtroEstadoId])
+  }, [token, pagina, grupoActivo, estados, gruposEstado])
+
+  function cambiarGrupo(grupo: GrupoEstado) {
+    // cambia grupo y vuelve a la página 1 en el MISMO evento (no en un
+    // useEffect aparte): si no, el efecto de arriba podría disparar con
+    // la página vieja y un grupo con menos tickets, pidiendo un offset
+    // que ya no existe (PostgREST respondería 416).
+    setGrupoActivo(grupo)
+    setPagina(1)
+  }
 
   return (
     <div>
       {error && <p className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">
-          {rol === 'cliente' ? 'Mis tickets' : 'Tickets'}
-        </h1>
-        <select
-          value={filtroEstadoId}
-          onChange={(e) => {
-            // cambia filtro y vuelve a la página 1 en el MISMO evento (no en
-            // un useEffect aparte): React agrupa ambos setState en un solo
-            // render, así el efecto que pide los datos ya ve pagina=1 y
-            // nunca llega a pedir un offset que no existe para el filtro
-            // nuevo (si no, PostgREST responde 416 con la página vieja).
-            setFiltroEstadoId(e.target.value ? Number(e.target.value) : '')
-            setPagina(1)
-          }}
-          className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-        >
-          <option value="">Todos los estados</option>
-          {estados.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.nombre}
-            </option>
-          ))}
-        </select>
+      <h1 className="mb-4 text-xl font-semibold text-slate-900">
+        {rol === 'cliente' ? 'Mis tickets' : 'Tickets'}
+      </h1>
+
+      <div className="mb-4 rounded-lg border border-slate-200 bg-white px-4 py-3">
+        <Stepper pasos={PASOS} activo={grupoActivo} onCambiar={cambiarGrupo} />
       </div>
 
       {cargando ? (
