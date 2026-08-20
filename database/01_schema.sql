@@ -16,6 +16,7 @@ CREATE TABLE api.empresas (
     id          SERIAL PRIMARY KEY,
     nombre      VARCHAR(150) NOT NULL UNIQUE,
     descripcion VARCHAR(255),
+    correo VARCHAR(255),
     activa      BOOLEAN NOT NULL DEFAULT TRUE,
     creado_en   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -79,7 +80,15 @@ CREATE TABLE api.tickets (
     id              SERIAL PRIMARY KEY,
     titulo          VARCHAR(150) NOT NULL,
     descripcion     TEXT NOT NULL,
+    -- Dueño del ticket (de quién es, para qué empresa cuenta en RLS y en
+    -- el campo "Empresa" del frontend). Normalmente un cliente.
     usuario_id      INT NOT NULL REFERENCES api.usuarios(id),
+    -- Quién lo escribió de verdad en el sistema. Si un cliente crea su
+    -- propio ticket, creado_por_id = usuario_id (la misma persona). Si un
+    -- agente lo registra a nombre de un cliente, usuario_id = el cliente
+    -- y creado_por_id = el agente — así queda "marcado" quién lo creó
+    -- sin necesitar una bandera aparte (basta comparar los dos campos).
+    creado_por_id   INT NOT NULL REFERENCES api.usuarios(id),
     asignado_a      INT REFERENCES api.usuarios(id),
     categoria_id    INT NOT NULL REFERENCES api.categorias(id),
     prioridad_id    INT NOT NULL REFERENCES api.prioridades(id),

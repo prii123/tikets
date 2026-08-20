@@ -108,9 +108,12 @@ CREATE POLICY tickets_agente_update ON api.tickets
     USING (asignado_a = api.current_usuario_id() OR asignado_a IS NULL)
     WITH CHECK (true);
 
+-- un agente puede crear un ticket a nombre de CUALQUIER cliente
+-- (usuario_id libre), pero no puede acreditarle la creación a otro
+-- agente: creado_por_id siempre debe ser él mismo.
 CREATE POLICY tickets_agente_insert ON api.tickets
     FOR INSERT TO agente
-    WITH CHECK (true);
+    WITH CHECK (creado_por_id = api.current_usuario_id());
 
 -- cliente ve todos los tickets de SU EMPRESA, no solo los que él creó
 -- (cualquier compañero de la misma empresa puede dar seguimiento).
@@ -120,10 +123,11 @@ CREATE POLICY tickets_cliente_select_empresa ON api.tickets
         usuario_id IN (SELECT id FROM api.usuarios WHERE empresa_id = api.current_empresa_id())
     );
 
--- pero al crear un ticket, siempre queda a nombre de quien lo crea.
+-- un cliente solo puede crear tickets a su propio nombre, y solo puede
+-- acreditarse la creación a sí mismo (no puede fingir que lo creó otro).
 CREATE POLICY tickets_cliente_insert_propio ON api.tickets
     FOR INSERT TO cliente
-    WITH CHECK (usuario_id = api.current_usuario_id());
+    WITH CHECK (usuario_id = api.current_usuario_id() AND creado_por_id = api.current_usuario_id());
 
 -- ---------------------------------------------------------
 -- comentarios

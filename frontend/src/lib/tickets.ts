@@ -15,6 +15,7 @@ const DETALLE_SELECT =
   'prioridad:prioridades(*),' +
   'estado:estados(*),' +
   'reportado_por:usuarios!tickets_usuario_id_fkey(id,nombre,email,empresa:empresas(id,nombre)),' +
+  'creado_por:usuarios!tickets_creado_por_id_fkey(id,nombre,rol),' +
   'asignado:usuarios!tickets_asignado_a_fkey(id,nombre,email),' +
   'comentarios(id,ticket_id,usuario_id,contenido,es_interno,creado_en,autor:usuarios(nombre,rol)),' +
   'adjuntos(id,ticket_id,comentario_id,nombre_archivo,ruta,tipo_mime,tamano_bytes,subido_en),' +
@@ -33,6 +34,7 @@ export interface NuevoTicket {
   titulo: string
   descripcion: string
   usuario_id: number
+  creado_por_id: number
   categoria_id: number
   prioridad_id: number
   estado_id: number

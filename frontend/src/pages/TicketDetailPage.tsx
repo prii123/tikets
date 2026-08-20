@@ -127,6 +127,11 @@ export function TicketDetailPage() {
           <span className="text-xs text-slate-500">Ticket #{ticket.id}</span>
         </div>
         <h1 className="mb-2 text-xl font-semibold text-slate-900">{ticket.titulo}</h1>
+        {ticket.creado_por && ticket.creado_por.id !== ticket.usuario_id && (
+          <p className="mb-3 inline-block rounded-md bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+            Registrado por {ticket.creado_por.nombre} a nombre del cliente
+          </p>
+        )}
         <p className="mb-4 whitespace-pre-wrap text-slate-700">{ticket.descripcion}</p>
 
         <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-slate-600 sm:grid-cols-3">

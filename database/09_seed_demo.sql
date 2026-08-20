@@ -90,6 +90,7 @@ DECLARE
     v_titulo         TEXT;
     v_ticket_id      INT;
     v_agente_id      INT;
+    v_creado_por_id  INT;
     n                INT;
 BEGIN
     SELECT array_agg(id) INTO v_agente_ids    FROM api.usuarios WHERE rol = 'agente';
@@ -103,13 +104,20 @@ BEGIN
             v_agente_id := CASE WHEN random() < 0.7
                 THEN v_agente_ids[1 + floor(random() * array_length(v_agente_ids, 1))::int]
                 ELSE NULL END;
+            -- ~25% de los tickets los "levanta" un agente a nombre del
+            -- cliente (ej. reporte telefónico), para tener ejemplos
+            -- reales del marcador "creado por agente" en la demo.
+            v_creado_por_id := CASE WHEN random() < 0.25
+                THEN v_agente_ids[1 + floor(random() * array_length(v_agente_ids, 1))::int]
+                ELSE v_cliente.id END;
 
             INSERT INTO api.tickets
-                (titulo, descripcion, usuario_id, asignado_a, categoria_id, prioridad_id, estado_id, creado_en)
+                (titulo, descripcion, usuario_id, creado_por_id, asignado_a, categoria_id, prioridad_id, estado_id, creado_en)
             VALUES (
                 v_titulo,
                 v_titulo || '. Descripción de prueba generada para poblar el ambiente de desarrollo.',
                 v_cliente.id,
+                v_creado_por_id,
                 v_agente_id,
                 v_categoria_ids[1 + floor(random() * array_length(v_categoria_ids, 1))::int],
                 v_prioridad_ids[1 + floor(random() * array_length(v_prioridad_ids, 1))::int],

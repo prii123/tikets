@@ -77,6 +77,7 @@ export interface Ticket {
   titulo: string
   descripcion: string
   usuario_id: number
+  creado_por_id: number
   asignado_a: number | null
   categoria_id: number
   prioridad_id: number
@@ -88,6 +89,9 @@ export interface Ticket {
   prioridad?: Prioridad
   estado?: Estado
   reportado_por?: Pick<Usuario, 'id' | 'nombre' | 'email'> & { empresa?: Pick<Empresa, 'id' | 'nombre'> | null }
+  // presente solo cuando quien lo creó no es el dueño del ticket (un
+  // agente lo registró a nombre de un cliente) — ver lib/tickets.ts
+  creado_por?: Pick<Usuario, 'id' | 'nombre' | 'rol'> | null
   asignado?: Pick<Usuario, 'id' | 'nombre' | 'email'> | null
   comentarios?: Comentario[]
   adjuntos?: Adjunto[]

@@ -6,7 +6,8 @@
 
 CREATE INDEX idx_usuarios_empresa_id ON api.usuarios(empresa_id);
 
-CREATE INDEX idx_tickets_usuario_id   ON api.tickets(usuario_id);
+CREATE INDEX idx_tickets_usuario_id    ON api.tickets(usuario_id);
+CREATE INDEX idx_tickets_creado_por_id ON api.tickets(creado_por_id);
 CREATE INDEX idx_tickets_asignado_a   ON api.tickets(asignado_a);
 CREATE INDEX idx_tickets_categoria_id ON api.tickets(categoria_id);
 CREATE INDEX idx_tickets_prioridad_id ON api.tickets(prioridad_id);
