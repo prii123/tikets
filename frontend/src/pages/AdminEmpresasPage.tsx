@@ -103,13 +103,13 @@ export function AdminEmpresasPage() {
         </form>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
               <th className="px-4 py-2">Nombre</th>
-              <th className="px-4 py-2">Correo</th>
-              <th className="px-4 py-2">Descripción</th>
+              <th className="hidden px-4 py-2 sm:table-cell">Correo</th>
+              <th className="hidden px-4 py-2 md:table-cell">Descripción</th>
               <th className="px-4 py-2">Estado</th>
               {esAdmin && <th className="px-4 py-2"></th>}
             </tr>
@@ -118,8 +118,8 @@ export function AdminEmpresasPage() {
             {empresas.map((emp) => (
               <tr key={emp.id} className="hover:bg-slate-50">
                 <td className="px-4 py-3 font-medium text-slate-900">{emp.nombre}</td>
-                <td className="px-4 py-3 text-slate-600">{emp.correo ?? '—'}</td>
-                <td className="px-4 py-3 text-slate-600">{emp.descripcion ?? '—'}</td>
+                <td className="hidden px-4 py-3 text-slate-600 sm:table-cell">{emp.correo ?? '—'}</td>
+                <td className="hidden px-4 py-3 text-slate-600 md:table-cell">{emp.descripcion ?? '—'}</td>
                 <td className="px-4 py-3">
                   <span
                     className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${

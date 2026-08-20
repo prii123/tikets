@@ -185,14 +185,14 @@ export function AdminUsuariosPage() {
         </button>
       </form>
 
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
               <th className="px-4 py-2">Nombre</th>
-              <th className="px-4 py-2">Correo</th>
+              <th className="hidden px-4 py-2 sm:table-cell">Correo</th>
               <th className="px-4 py-2">Rol</th>
-              <th className="px-4 py-2">Empresa</th>
+              <th className="hidden px-4 py-2 md:table-cell">Empresa</th>
               <th className="px-4 py-2">Estado</th>
             </tr>
           </thead>
@@ -200,9 +200,9 @@ export function AdminUsuariosPage() {
             {usuarios.map((u) => (
               <tr key={u.id} className="hover:bg-slate-50">
                 <td className="px-4 py-3 font-medium text-slate-900">{u.nombre}</td>
-                <td className="px-4 py-3 text-slate-600">{u.email}</td>
+                <td className="hidden px-4 py-3 text-slate-600 sm:table-cell">{u.email}</td>
                 <td className="px-4 py-3 text-slate-600">{ROL_LABEL[u.rol]}</td>
-                <td className="px-4 py-3 text-slate-600">{u.empresa?.nombre ?? '—'}</td>
+                <td className="hidden px-4 py-3 text-slate-600 md:table-cell">{u.empresa?.nombre ?? '—'}</td>
                 <td className="px-4 py-3 text-slate-600">{u.activo ? 'Activo' : 'Inactivo'}</td>
               </tr>
             ))}

@@ -140,7 +140,7 @@ export function TicketDetailPage() {
         )}
         <p className="mb-4 whitespace-pre-wrap text-slate-700">{ticket.descripcion}</p>
 
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-slate-600 sm:grid-cols-3">
+        <dl className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm text-slate-600 sm:grid-cols-3">
           <div>
             <dt className="text-slate-400">Categoría</dt>
             <dd>{ticket.categoria?.nombre}</dd>

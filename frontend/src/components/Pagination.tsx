@@ -12,11 +12,11 @@ export function Pagination({ pagina, porPagina, total, onCambiar }: PaginationPr
   const hasta = Math.min(pagina * porPagina, total)
 
   return (
-    <div className="flex items-center justify-between border-t border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+    <div className="flex flex-col gap-3 border-t border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
       <span>
         {desde}–{hasta} de {total}
       </span>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3 sm:justify-end">
         <span className="text-xs text-slate-400">
           Página {pagina} de {totalPaginas}
         </span>

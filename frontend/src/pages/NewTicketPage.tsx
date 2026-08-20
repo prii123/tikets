@@ -101,7 +101,7 @@ export function NewTicketPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-slate-200 bg-white p-6">
         {puedeElegirCliente && (
-          <div className="grid grid-cols-2 gap-4 rounded-md border border-blue-200 bg-blue-50 p-3">
+          <div className="grid grid-cols-1 gap-4 rounded-md border border-blue-200 bg-blue-50 p-3 sm:grid-cols-2">
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-slate-700">Empresa</span>
               <select
@@ -136,7 +136,7 @@ export function NewTicketPage() {
                 ))}
               </select>
             </label>
-            <p className="col-span-2 text-xs text-slate-500">
+            <p className="text-xs text-slate-500 sm:col-span-2">
               El ticket queda a nombre de este cliente; va a quedar marcado que tú lo registraste.
             </p>
           </div>
@@ -163,7 +163,7 @@ export function NewTicketPage() {
           />
         </label>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-slate-700">Categoría</span>
             <select

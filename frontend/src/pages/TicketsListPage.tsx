@@ -84,17 +84,17 @@ export function TicketsListPage() {
           No hay tickets para mostrar.
         </p>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-2">Título</th>
-                <th className="px-4 py-2">Categoría</th>
+                <th className="hidden px-4 py-2 sm:table-cell">Categoría</th>
                 <th className="px-4 py-2">Prioridad</th>
                 <th className="px-4 py-2">Estado</th>
-                {rol !== 'cliente' && <th className="px-4 py-2">Reportado por</th>}
-                <th className="px-4 py-2">Asignado</th>
-                <th className="px-4 py-2">Creado</th>
+                {rol !== 'cliente' && <th className="hidden px-4 py-2 md:table-cell">Reportado por</th>}
+                <th className="hidden px-4 py-2 sm:table-cell">Asignado</th>
+                <th className="hidden px-4 py-2 md:table-cell">Creado</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -105,14 +105,14 @@ export function TicketsListPage() {
                       {t.titulo}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{t.categoria?.nombre}</td>
+                  <td className="hidden px-4 py-3 text-slate-600 sm:table-cell">{t.categoria?.nombre}</td>
                   <td className="px-4 py-3">{t.prioridad && <PrioridadBadge nombre={t.prioridad.nombre} />}</td>
                   <td className="px-4 py-3">{t.estado && <EstadoBadge nombre={t.estado.nombre} />}</td>
                   {rol !== 'cliente' && (
-                    <td className="px-4 py-3 text-slate-600">{t.reportado_por?.nombre}</td>
+                    <td className="hidden px-4 py-3 text-slate-600 md:table-cell">{t.reportado_por?.nombre}</td>
                   )}
-                  <td className="px-4 py-3 text-slate-600">{t.asignado?.nombre ?? 'Sin asignar'}</td>
-                  <td className="px-4 py-3 text-slate-500">
+                  <td className="hidden px-4 py-3 text-slate-600 sm:table-cell">{t.asignado?.nombre ?? 'Sin asignar'}</td>
+                  <td className="hidden px-4 py-3 text-slate-500 md:table-cell">
                     {new Date(t.creado_en).toLocaleDateString('es-MX')}
                   </td>
                 </tr>

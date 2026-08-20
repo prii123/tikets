@@ -224,6 +224,13 @@ erDiagram
 - ~~Quitar del frontend el flujo público de "Crear cuenta"~~ — **Hecho.**
 - ~~CRUD de categorías y prioridades~~ — **Hecho.** `/admin/catalogos`, solo admin (agente tiene RLS de solo lectura ahí).
 - ~~Que un agente pueda crear un ticket a nombre de un cliente, con marca de quién lo creó~~ — **Hecho.** Ver `tickets.creado_por_id` en la tabla de arriba y el selector empresa→cliente en "Nuevo ticket".
+- ~~Estilos responsivos para celular en todo el frontend~~ — **Hecho.** Cambios principales:
+  - `Layout.tsx`: el sidebar fijo (240px) ahora es un panel deslizable (`fixed` + `-translate-x-full`/`translate-x-0`) en pantallas menores a `lg` (1024px), con botón hamburguesa y overlay; se mantiene fijo y estático como antes desde `lg` en adelante. Se cierra solo al navegar a otra ruta.
+  - Todas las tablas (`TicketsListPage`, `AdminUsuariosPage`, `AdminEmpresasPage`, `AdminCatalogosPage`): el contenedor pasó de `overflow-hidden` a `overflow-x-auto` — antes, en pantallas angostas, las columnas que no cabían quedaban **recortadas y ocultas sin forma de verlas**; ahora se puede hacer scroll horizontal. Además, columnas secundarias (Categoría, Asignado, Reportado por, Creado, Correo, Descripción) se ocultan bajo `sm`/`md` y reaparecen en pantallas más anchas, para que la tabla priorice lo esencial en celular.
+  - Formularios con `grid-cols-2`/`grid-cols-3` fijos (`NewTicketPage`) pasaron a `grid-cols-1 sm:grid-cols-2` para apilarse en una sola columna en celular.
+  - `Pagination`: los controles pasan de una fila a apilarse verticalmente (`flex-col sm:flex-row`) en pantallas angostas.
+  - `Stepper`: etiquetas y separadores se reducen (`text-xs sm:text-sm`) para que los 3 pasos quepan sin apretarse en celular.
+  - El padding del contenido principal (`main`) se redujo en mobile (`px-4 py-4`) y crece en `sm` (`px-6 py-6`).
 - Decidir si se necesita **SLA** (tiempos máximos de respuesta/resolución) — implicaría una tabla adicional.
 - Notificaciones (correo o dentro de la app) cuando cambia el estado de un ticket — Cognito no cubre esto; evaluar SES/SNS.
 - Definir los endpoints que expone PostgREST (vistas/funciones para operaciones que no sean CRUD directo, ej. asignar ticket, cerrar ticket).

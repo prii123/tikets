@@ -32,11 +32,13 @@ export function Stepper<T extends string>({ pasos, activo, onCambiar }: StepperP
               >
                 {i + 1}
               </span>
-              <span className={`text-sm font-medium ${esActivo ? 'text-blue-700' : 'text-slate-500'}`}>
+              <span
+                className={`text-xs font-medium sm:text-sm ${esActivo ? 'text-blue-700' : 'text-slate-500'}`}
+              >
                 {paso.etiqueta}
               </span>
             </button>
-            {!esUltimo && <div className="mx-3 h-px flex-1 bg-slate-200" />}
+            {!esUltimo && <div className="mx-2 h-px flex-1 bg-slate-200 sm:mx-3" />}
           </div>
         )
       })}

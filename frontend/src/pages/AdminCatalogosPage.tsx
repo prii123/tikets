@@ -103,12 +103,12 @@ function SeccionCategorias({ token, onError }: { token: string | null; onError: 
       {cargando ? (
         <p className="text-slate-500">Cargando...</p>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-2">Nombre</th>
-                <th className="px-4 py-2">Descripción</th>
+                <th className="hidden px-4 py-2 sm:table-cell">Descripción</th>
                 <th className="px-4 py-2">Estado</th>
                 <th className="px-4 py-2"></th>
               </tr>
@@ -117,7 +117,7 @@ function SeccionCategorias({ token, onError }: { token: string | null; onError: 
               {categorias.map((cat) => (
                 <tr key={cat.id} className="hover:bg-slate-50">
                   <td className="px-4 py-3 font-medium text-slate-900">{cat.nombre}</td>
-                  <td className="px-4 py-3 text-slate-600">{cat.descripcion ?? '—'}</td>
+                  <td className="hidden px-4 py-3 text-slate-600 sm:table-cell">{cat.descripcion ?? '—'}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -233,7 +233,7 @@ function SeccionPrioridades({ token, onError }: { token: string | null; onError:
       {cargando ? (
         <p className="text-slate-500">Cargando...</p>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
